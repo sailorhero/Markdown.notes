@@ -114,6 +114,7 @@ maven有两种生成可执行jar包的插件，能够自动加载依赖包。分
 				</exclusion>
 			</exclusions>
 		</dependency>
+		
 ###归类依赖(pom.xml配置）
 	
 	<properties>
@@ -160,11 +161,13 @@ maven有两种生成可执行jar包的插件，能够自动加载依赖包。分
 		<version>${cxf.version}</version>
 	</dependency>
 	<!-- SOAP end -->
+	
 ###依赖优化（pom.xml配置)
 
 	mvn dependency:list		#查看项目已解析依赖（Resolved Dependency）
 	mvn dependency:tree		#查看当前项目的依赖树
 	mvn dependency:analyze	#工具帮助分析当前项目的依赖，重点关注"Used undeclared dependencies"和"Unused declared dependencies"
+	
 ##Maven常用命令
 	
 	mvn clean compile	#编译
