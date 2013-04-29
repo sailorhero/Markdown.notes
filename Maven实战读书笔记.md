@@ -15,7 +15,7 @@ Maven的两个核心概念：坐标和依赖。
 ###检查JDK安装
 
 	echo %JAVA_HOME%
-    java -version		#查看Java版本
+	java -version		#查看Java版本
 ###下载Maven
 ###本地安装
 
@@ -41,6 +41,7 @@ Maven的两个核心概念：坐标和依赖。
 2. 在Linux多用户环境下，用户需要复制%MAVEN_HOME%/conf/settings.xml到～\.m2\settings.xml，这是一条最佳实践。
 	
 	mvn help:system		#打印当前Java系统属性和环境变量
+
 ###设置HTTP代理
 编辑settings.xml，添加代理配置如下:
 
@@ -76,17 +77,20 @@ Maven的两个核心概念：坐标和依赖。
 						<showWarnings>true</showWarnings>
 					</configuration>
 				</plugin>
+				
 ###Maven生成可执行Jar包(pom.xml配置）
 maven有两种生成可执行jar包的插件，能够自动加载依赖包。分别为 maven-assembly-plugin 和appassembler-maven-plugin。 
 
 - appassembler-maven-plugin 的优势是能够自动生成window和linux的启动脚本
 - maven-assembly-plugin 生成jar包后需要执行 java -jar **.jar命令运行jar包。
 ### Maven项目骨架
+
 - 根目录中放置pom.xml
 - src/main/java目录中，放置项目的主代码
 - src/main/resources目录中，放置项目的的资源文件，如配置文件*.ini/*.xml/*.propeties
 - src/test/java目录中，放置项目的测试代码
 ###排除依赖(pom.xml配置）
+
 		<dependency>
 			<groupId>log4j</groupId>
 			<artifactId>log4j</artifactId>
@@ -111,6 +115,7 @@ maven有两种生成可执行jar包的插件，能够自动加载依赖包。分
 			</exclusions>
 		</dependency>
 ###归类依赖(pom.xml配置）
+	
 	<properties>
 		<!-- 主要依赖库的版本定义 -->
 		<cxf.version>2.7.4</cxf.version>
@@ -156,6 +161,7 @@ maven有两种生成可执行jar包的插件，能够自动加载依赖包。分
 	</dependency>
 	<!-- SOAP end -->
 ###依赖优化（pom.xml配置)
+
 	mvn dependency:list		#查看项目已解析依赖（Resolved Dependency）
 	mvn dependency:tree		#查看当前项目的依赖树
 	mvn dependency:analyze	#工具帮助分析当前项目的依赖，重点关注"Used undeclared dependencies"和"Unused declared dependencies"
