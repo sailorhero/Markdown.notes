@@ -319,7 +319,9 @@ Maven拥有三套相互独立的生命周期，分别为clean,default和site.
 
 ### 在线插件信息
 1. [Apache官方插件](http://maven.apache.org/plugins/index.html)
+
 ### Maven插件的聚合与继承的关系
+
 多模块Maven项目中，聚合与继承是两个概念，聚合是为了方便快速构建多个项目，继承是为了消除重复配置。
 
 聚合模块知道那些模块被聚合，但被聚合的模块不知道这个聚合模块的存在。
