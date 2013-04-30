@@ -307,6 +307,29 @@ Maven拥有三套相互独立的生命周期，分别为clean,default和site.
 
 ![内置绑定关系2](Maven实战读书笔记.images/内置绑定关系2.png) 
 
+### 插件配置
+
+1. 命令行插件配置
+例如针对测试插件maven-surefire-plugin，提供了maven.test.skip参数
+
+    mvn install -Dmaven.test.skip=true 	#跳过测试
+
+2. POM中插件全局配置
+例如配置maven-compiler-plugin，编译java1.5版本的源文件，生成与jvm 1.5兼容的字节码文件。
+
+### 在线插件信息
+1. [Apache官方插件](http://maven.apache.org/plugins/index.html)
+### Maven插件的聚合与继承的关系
+多模块Maven项目中，聚合与继承是两个概念，聚合是为了方便快速构建多个项目，继承是为了消除重复配置。
+
+聚合模块知道那些模块被聚合，但被聚合的模块不知道这个聚合模块的存在。
+
+继承关系的父POM，它不知道哪些子模块继承于它，但子模块必须知道自己的父POM是什么。
+
+聚合POM与继承关系中的父POM的packaging属性必须是pom，同时，聚合模块与继承关系中的父模块除了POM之外，都没有实际的内容。如图：
+
+![聚合与继承POM关系](Maven实战读书笔记.images/聚合与继承POM关系.png) 
+
 ## Maven常用命令
 	
 	mvn clean compile	#编译
@@ -314,3 +337,5 @@ Maven拥有三套相互独立的生命周期，分别为clean,default和site.
 	mvn clean package	#打包
 	mvn clean install	#将打包安装到Maven库（本地库）
 	mvn clean deploy    #将项目勾结输出的构件部署到远程仓库
+
+	
