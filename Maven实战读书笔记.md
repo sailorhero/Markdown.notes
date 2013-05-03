@@ -196,6 +196,18 @@ maven有两种生成可执行jar包的插件，能够自动加载依赖包。分
     	</dependency>
     	<!-- SOAP end -->
 	
+### 约定优于配置
+Maven提倡“约定优于配置”（Convention Over Configuration），这是Maven最核心的设计理念之一。原因之一是，使用约定可以大量减少配置。
+
+对Maven 3，超级POM在文件$MAVEN_HOME/lib/maven-model-builder-x.x.x.jar中的org/apache/maven/model/pom-4.0.0.xml路径下。主要定义包括：
+
+- 仓库及插件仓库
+- 超级POM中关于项目结构约定的定义，包括：项目的主输出目录、主代码输出目录、最终构件的名称格式、测试代码输出目录、主源码目录、脚本源码目录、测试源码目录、主资源目录和测试资源目录。
+- 核心插件版本设定
+- 项目报告输出目录
+- 项目发布的profile
+
+
 ###依赖优化（pom.xml配置)
 
 	mvn dependency:list		#查看项目已解析依赖（Resolved Dependency）
@@ -332,7 +344,9 @@ Maven拥有三套相互独立的生命周期，分别为clean,default和site.
 
 ![聚合与继承POM关系](Maven实战读书笔记.images/聚合与继承POM关系.png) 
 
-## Maven常用命令
+
+
+# Maven常用命令
 	
 	mvn clean compile	#编译
 	mvn clean test		#测试
@@ -340,4 +354,374 @@ Maven拥有三套相互独立的生命周期，分别为clean,default和site.
 	mvn clean install	#将打包安装到Maven库（本地库）
 	mvn clean deploy    #将项目勾结输出的构件部署到远程仓库
 
-	
+	mvn coberatura:coberature		#生成测试覆盖率报告
+
+# Maven与Jenkins持续集成
+
+## 持续集成的作用、过程和优势
+
+1. 快速
+2. 高频率
+3. 自动
+4. 构建
+5. 所有源码
+6. 反馈
+
+一次完整的集成大致包括下面六个步骤
+
+1. 	持续编译
+2. 	持续数据库集成；持续集成包括数据库的集成，每次发现新的SQL脚本，就应该清理集成环境的数据库，重新创建表结构，并填入预备的数据。这样就能随时发现脚本的错误，
+3. 	持续测试
+4. 	持续审查；诸如Checkstyle和PMD之类的工具能够帮我们发现代码中的坏味道（Bad Smell)，持续集成可以使用这些工具来生成各类报告，如测试覆盖率、Checkstyle报告、PMD报告等。
+5. 	持续部署；有些错误只有在部署后才能被发现，往往是具体容器或者环境相关的，自动化部署能够帮助进口发现这类问题。
+6. 	持续反馈；持续集成的最后一步反馈，通常是一封电子邮件。基本规则：将集成失败报告发送给这次集成相关的代码提交者，项目经理应该收到所有失败报告。
+
+持续集成的好处：
+
+1. 尽早暴露问题
+1. 减少重复操作
+1. 简化项目发布 
+2. 建立团队信心
+
+
+## Maven构建WEB应用
+
+### WEB项目的目录结构
+在Java世界中，WEB项目的标准打包方式是WAR。WAR与JAR类似，只不过可以包含更多的内容，如JSP文件、Servlet、Java类、Web.xml配置文件、依赖JAR包、静态web资源（如HTML、CSS、JavaScript文件）等。
+
+
+![WAR包目录结构与Maven_WEB项目目录结构](Maven实战读书笔记.images/WAR包目录结构与Maven_WEB项目目录结构.png) 
+
+WAR包结构与Maven项目结构对应关系参见上图；另Maven项目中不存在依赖lib目录，Maven在用WAR方式打包时，会根据POM配置从本地仓库复制相应的JAR文件。
+
+### 使用Tomcat Maven Plugin/jetty-maven-plugin进行测试
+
+[Apache Tomcat Maven Plugin](http://tomcat.apache.org/maven-plugin.html)
+
+
+### 使用Cargo实现自动化部署
+
+[Cargo Maven plugin](http://cargo.codehaus.org/Maven2+plugin)
+
+# 版本管理
+
+- Subversion版本发布过程
+> $mvn clean install
+> 
+> $mvn commit pom.xml -m "prepare to release 1.0"
+> 
+> $svn copy -m "tag release 1.0" \
+> https://svn.juvenxu.com/project/trunk \
+> https://svn.juvenxu.com/project/tags/1.0 
+
+## 自动化版本发布
+Maven Release Plugin提供了版本发布自动化功能，只需要提供一些必要的信息，它就能帮我们完成上述所有版本发布所涉及的操作。
+
+Maven Release Plugin主要有三个目标，分别是：
+
+- release:prepare  准备版本发布
+>
+>1. 检查项目是否有未提交的代码
+>2. 检查项目是否有快照版本依赖
+>3. 根据用户的输入将快照版本升级为发布版
+>4. 将POM中的SCM信息更新为标签地址
+>5. 基于修改后的POM执行Maven构建
+>6. 提交POM变更
+>7. 基于用户输入为代码打标签
+>8. 将代码从发布版本升级为新的快照版
+>9. 提交POM变更
+
+
+
+- release:rollback 回退release:prepare所执行的操作。将POM回退至release:prepare之前的状态，并提交。需要注意的是，该步骤不会删除release:prepare生成的标签，因此需要用户手动删除
+
+- release:perform 执行版本发布。签出release:prepare生成的标签中的源代码，并在此基础上执行mvn deploy命令打包并部署构建至仓库。
+
+
+
+1. 一般配置项目的SCM信息，在pom.xml如下：
+
+    	<scm>
+    	<connection>scm:svn:http://somerepository.com/svn_repo/trunk</connection>
+    	<developerConnection>scm:svn:https://somerepository.com/svn_repo/trunk</developerConnection>
+    	<url>http://somerepository.com/view.cvs</url>
+    	<scm>
+
+2. 配置maven-release-plugin提供标签基础目录
+
+	<plugin>
+    	<groupId>org.apache.maven.plugins</groupId>
+    	<artifactId>maven-release-plugin</artifactId>
+    	<configuration>
+    		<tagBase>scm:svn:http://somerepository.com/svn_repo/tags</tagBase>
+    		<autoVersionSubmodules>true</autoVersionSubmodules>
+    	</configuration>
+    </plugin>
+
+*注意事项*
+
+1. 系统必须提供svn命令行工具，Maven无法使用图形化的工具，如TortoiseSVN;
+2. POM必须配置了可用的部署仓库，因为release:perform会执行deploy操作将构件发布到仓库中。
+
+## 自动化创建分支
+
+使用Maven Release Plugin的branch目标，它能够帮我们自动化这些操作：
+
+
+1. 检查本地有无未提交的代码
+2. 为分支更改POM的版本，例如从1.1.0-SNAPSHOT改为1.1.1-SNAPSHOT
+3. 将POM中的SCM信息更新为分支地址
+4. 提交以上更改
+5. 将主干的代码复制到分支中
+6. 修改本地代码使其回退到分支之前的版本（用户可以指定新的版本）
+7. 提交本地更改
+
+其中tagBase和branchBase并非是一定要配置的。如果为SVN仓库使用了标准的Subversion布局，即在平行的trunk/tags/branches目录下分别放置项目主干代码、标签代码和分支代码，那么Maven Release Plugin就能够自动根据主干代码位置计算出标签及分支代码位置，因此可以省略这两项配置。
+
+>	$mvn release:branch -DbranchName=1.1.x  -DupdateBranchVersion=true -DupdateWorkingCopyVersion=false
+
+#灵活的构建
+Maven为了支持构建的灵活性，内置了三大特性，即属性、Profile和资源过滤。
+
+## Maven 属性，分为6类
+
+- 内置属性：常用有两个
+>1.  ${basedir} #项目根目录，即包含pom.xml文件的目录
+>2.  ${version} #表示项目版本
+
+- POM属性：用户可以使用该类属性，引用POM文件中对应元素的值。
+>
+>1. ${project.build.sourceDirectory}  
+>2. ${project.build.testSourceDirctory}
+>3. ${project.build.directory}   #项目构建输出目录，默认target/
+>4. ${project.outputDirectory}   #项目主代码编译输出目录，默认target/classes
+>5. ${project.testOutputDirectory}  #项目测试代码编译输出目录，默认为target/test-classes
+>6. ${project.groupId}
+>7. ${project.artifactId}
+>8. ${project.version}           #与${project}等价
+>9. ${project.build.finalName}   #项目打包输出文件的名称，默认为${project.artifactId}-${project.version}.
+
+- 自定义属性
+
+    	<project>  
+    	...  
+    	<properties>  
+    	<my.prop>hello</my.prop>  
+    	</properties>  
+    	...  
+    	</project>
+ 然后可以在POM中其他地方，使用`${my.prop}`调用
+
+- Settings属性，与POM属性同理，用户使用以`settings.`开头的属性引用settings.xml文件中的XML元素的值，如常用的`${settings.localRespository}`指向用户本地仓库的地址
+
+- Java系统属性：所有Java系统属性都可以使用Maven属性引用，例如`${user.home}`指向了用户目录，用户可以使用`mvn help:system`查看所有的Java系统属性。
+
+- 环境变量属性：所有的环境变量都可以使用以`env.`开头的Maven属性引用，例如`${env.JAVA_HOME}`指代了JAVA_HOME环境变量的值。用户可以使用`mvn help:system`查看所有的环境属性。
+
+## 构建环境的差异及资源过滤
+
+最常见的，就是数据库配置；针对开发/测试/产品环境使用不同的配置，手动更改；
+
+Maven的答案是针对不同的环境生成不同的构件。
+例如：在src/main/resources/目录下放置带有如下内容的数据库配置文件：
+
+>	database.jdbc.driverClass 	= ${db.driver}
+>	database.jdbc.connectionURL = ${db.url}
+>	database.jdbc.username 		= ${db.username}
+>	database.jdbc.password 		= ${db.password}
+
+在这里定义了4个Maven属性:db.driver、db.url、db.username、db.password。前面介绍过自定义Maven属性，这里要做的是使用一个额外的`profile`将其包裹。
+
+	<project>  
+    ...  
+    <profiles>  
+        <profile>  
+            <id>dev</id>  
+            <properties>  
+                <db.driver>...</db.driver>  
+                <db.url>...</db.url>  
+                <db.username>...</db.username>  
+                <db.password>...</db.password>  
+            </properties>  
+        </profile>  
+        <profile>  
+            <id>test</id>  
+            <properties>  
+                <db.driver>...</db.driver>  
+                <db.url>...</db.url>  
+                <db.username>...</db.username>  
+                <db.password>...</db.password>  
+            </properties>  
+        </profile>  
+    </profiles>  
+    ...  
+	</project>  
+
+添加配置，让Maven解析资源文件中的Maven属性。
+
+	<project>  
+    ...  
+    <build>  
+        <resources>  
+            <resource>  
+                <directory>${project.basedir}/src/main/resources</directory>  
+                <filtering>true</filtering>  
+            </resource>   
+        </resources>  
+    </build>  
+    ...  
+	</project>
+
+最后，只需要在命令行激活profile，Maven就能够在构建项目的时候使用profile中的属性值替换数据库配置文件中的属性引用。运行命令行如下：
+
+`$mvn clean install -Pdev`
+
+mvn的`-P`参数表示在命令行激活一个profile。这里激活了id为dev的profile。构建完成后，输出目录中的数据库配置就是开发环境的配置了。
+
+Maven支持很多种激活Profile的方式。
+
+1. 命令行激活
+2. settings文件显式激活；可以配置settings.xml文件的activeProfiles元素，表示其配置的profile对于所有项目都处于激活状态。
+3. 系统属性激活
+4. 操作系统环境激活
+5. 文件存在与否激活
+
+### 查看profile激活情况
+1. 查看当前激活的profile
+
+	$mvn help:active-profiles
+2. 列出当前所有的profile
+
+	$mvn help:all-profiles
+
+### profile的种类
+#### pom.xml  		
+针对当前项目有效
+
+POM中profile可使用的属性：
+
+	<project>  
+    <profiles>  
+        <profile>  
+            <build>  
+                <defaultGoal>...</defaultGoal>  
+                <finalName>...</finalName>  
+                <resources>...</resources>  
+                <testResources>...</testResources>  
+                <plugins>...</plugins>  
+            </build>  
+            <reporting>...</reporting>  
+            <modules>...</modules>  
+            <dependencies>...</dependencies>  
+            <dependencyManagement>...</dependencyManagement>  
+            <distributionManagement>...</distributionManagement>  
+            <repositories>...</repositories>  
+            <pluginRepositories>...</pluginRepositories>  
+            <properties>...</properties>  
+        </profile>  
+    </profiles>  
+	</project>  
+#### 用户settings.xml 	
+针对本地该用户所有的Maven项目有效
+#### 全局settings.xml 	
+针对本机所有Maven项目有效
+
+POM外部的profile可使用的属性,仅能用来影响项目的哦仓库和Maven属性。
+
+	<project>  
+            <repositories>...</repositories>  
+            <pluginRepositories>...</pluginRepositories>  
+            <properties>...</properties>  
+	</project> 
+
+## Web资源过滤
+
+需要区分Web项目中一般资源文件和Web资源文件，一般资源文件通过maven-resources-plugin处理，Web资源通过maven-war-plugin处理。
+
+# 生成项目站点
+
+Maven除了自动化构建以及管理依赖关系外；它还能帮助聚合项目信息，促进团队交流。
+
+POM包含各种项目信息，如项目描述、版本控制地址、缺陷跟踪系统地址、许可证信息、开发者信息等。可以让Maven自动生成一个Web站点，以Web形式发布这些信息。
+
+另外Maven社区提供了大量插件，能让用户生成各种各样的项目审查报告，包括测试覆盖率、静态代码分析、代码变更等。
+
+## 项目报告插件
+
+下面介绍一些比较常用的报告插件。报告插件在POM中配置位置与一般插件配置不同。一般插件配置在`<project><build><plugins>`下配置，而报告插件在`<project><reporting><plugins>`下配置。
+
+
+###JavaDocs
+
+maven-javadoc-plugin使用JDK的javadoc工具，基于项目的源码生成JavaDocs文档；
+
+### Source Xref
+
+Maven会以Web页面的形式将java源代码展现出来。
+
+### CheckStyle
+
+CheckStyle是一个用来帮助Java开发人员遵循编码规范的工具，能根据一套规则自动检查Java代码。
+
+默认情况下，maven-checkstyle-plugin会使用Sun定义的编码规范，插件内置了四种规则：
+
+- config/sun_checks.xml  	#Sun定义的编码规范（默认值）
+- config/maven_checks.xml	#Maven社区定义的编码规范
+- config/turbine_checks.xml #Turbine定义的编码规范
+- config/avalon_checks.xml	#Avalon定义的编码规范
+
+#### 自定义编码规范
+
+用户可以创建自己的编码规范，通常如下：
+
+1. 在src/main/resources/目录下定义一个checkstyle/my_checks.xml文件
+2. 配置<configLocation>checkstyle/my_checks.xml</configLocation>
+maven-checkstyle-plugin实际从ClassPath载入规则文件。
+
+### PMD
+
+PMD是一款强大的Java源代码分析工具，可以寻找代码中的问题，包括
+
+- 潜在的Bug
+- 无用代码
+- 可优化代码
+- 重复代码
+- 过于复杂的表达式
+
+PMD工具详细信息可以访问[http://pmd.sourceforge.net/](http://pmd.sourceforge.net/)
+
+除生成PMD报告之外，maven-pmd-plugin还会生成一个名为CPD的报告，该报告中包含了*代码拷贝粘贴*的分析结果。
+
+PMD包含了大量的分析规则，可以访问[http://pmd.sourceforge.net/rules/index.html](http://pmd.sourceforge.net/rules/index.html)查看这些规则。
+
+### ChangeLog
+
+maven-changlog-plugin 能够基于版本控制系统中就近的变更记录生成三份变更报告
+
+- ChangeLog		#基于提交的变更报告，包括每次提交的日期、文件、作者、注释等信息
+- Developer Activity		#基于作者的变更报告，包括作者列表以及每个作者相关的提交次数和涉及文件数目
+- File Actibity			#基于文件的变更报告，包括变更的文件列表及美国文件的变更次数
+
+生成项目的变更报告，需要配置正确的SCM信息；默认情况，插件生成最近30天的变更记录，不过用户可以修改默认值。
+
+### Cobertura
+
+在Site站点中，生成Cobertura测试覆盖率报告，需配置cobertura-maven-plugin插件。
+
+### Surefire Report Plugin 单元测试报告
+
+## 自定义站点外观
+
+### 国际化
+
+- 确保项目所有源码，包括pom.xml等资源文档，都以`UTF-8`编码保存
+- 告知maven-site-plugin插件，使用`UTF-8`编码读取所有源码及文档，同样使用`UTF-8`编码呈现站点html文档。需配置两个Maven属性
+
+	<properties>
+    	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+ 	</properties>
+
+
+- 配置maven-site-plugin指定当地的语言，配置当地语言为简体中文`zh_CN`
+
