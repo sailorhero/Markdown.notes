@@ -406,13 +406,13 @@ WAR包结构与Maven项目结构对应关系参见上图；另Maven项目中不�
 # 版本管理
 
 - Subversion版本发布过程
-> $mvn clean install
+>	$mvn clean install
 > 
-> $mvn commit pom.xml -m "prepare to release 1.0"
+> 	$mvn commit pom.xml -m "prepare to release 1.0"
 > 
-> $svn copy -m "tag release 1.0" \
-> https://svn.juvenxu.com/project/trunk \
-> https://svn.juvenxu.com/project/tags/1.0 
+> 	$svn copy -m "tag release 1.0" \
+> 	https://svn.juvenxu.com/project/trunk \
+> 	https://svn.juvenxu.com/project/tags/1.0 
 
 ## 自动化版本发布
 Maven Release Plugin提供了版本发布自动化功能，只需要提供一些必要的信息，它就能帮我们完成上述所有版本发布所涉及的操作。
